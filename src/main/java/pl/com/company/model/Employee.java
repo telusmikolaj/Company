@@ -6,14 +6,13 @@ import java.util.Objects;
 
 public class Employee {
 
-    private String firstName;
-    private String lastName;
+    private final String firstName;
+    private final String lastName;
     private final String pesel;
-    private BigDecimal salary;
+    private final BigDecimal salary;
 
-    private LocalDateTime createAt;
-    private LocalDateTime updatedAt;
-
+    private final LocalDateTime createAt;
+    private final LocalDateTime updatedAt;
 
     public Employee(String firstName, String lastName, String pesel, BigDecimal salary) {
         this.firstName = firstName;
@@ -62,16 +61,6 @@ public class Employee {
         return Objects.hash(firstName, lastName, pesel, salary);
     }
 
-    @Override
-    public String toString() {
-        return "Employee{" +
-                "firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", salary=" + salary +
-                ", createAt=" + createAt +
-                ", updatedAt=" + updatedAt +
-                '}';
-    }
 
 
 }
