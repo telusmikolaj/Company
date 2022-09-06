@@ -1,7 +1,9 @@
 package pl.com.company.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import pl.com.company.model.Employee;
+import pl.com.company.repository.EmployeeRepo;
 
 import java.math.BigDecimal;
 

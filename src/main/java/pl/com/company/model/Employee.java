@@ -6,13 +6,13 @@ import java.util.Objects;
 
 public class Employee {
 
-    private final String firstName;
-    private final String lastName;
-    private final String pesel;
-    private final BigDecimal salary;
+    private String firstName;
+    private String lastName;
+    private String pesel;
+    private BigDecimal salary;
 
-    private final LocalDateTime createAt;
-    private final LocalDateTime updatedAt;
+    private LocalDateTime createAt;
+    private LocalDateTime updatedAt;
 
     public Employee(String firstName, String lastName, String pesel, BigDecimal salary) {
         this.firstName = firstName;
@@ -22,6 +22,10 @@ public class Employee {
 
         this.createAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public Employee() {
+
     }
 
     public String getFirstName() {
