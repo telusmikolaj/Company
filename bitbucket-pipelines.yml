@@ -10,7 +10,8 @@ pipelines:
     - parallel:
       - step:
           name: 'Build and Test'
-          script: mvn clean install
+          script:
+            - mvn clean install
             - echo "Your build and test goes here..."
       - step:
           name: 'Lint'
@@ -25,7 +26,8 @@ pipelines:
     - step:
         name: 'Deployment to Staging'
         deployment: staging
-        script: mvn spring-boot:run
+        script:
+          - mvn spring-boot:run
           - echo "Your deployment to staging script goes here..."
     - step:
         name: 'Deployment to Production'
