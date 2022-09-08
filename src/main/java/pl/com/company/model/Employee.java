@@ -51,6 +51,9 @@ public class Employee {
     public String getPesel() {
         return pesel;
     }
+    public void setPesel(String pesel) {
+        this.pesel = pesel;
+    }
 
     @Override
     public boolean equals(Object o) {
