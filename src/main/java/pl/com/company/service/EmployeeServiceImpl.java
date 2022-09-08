@@ -17,7 +17,8 @@ public class EmployeeServiceImpl implements EmployeeService{
 
     @Override
     public EmployeeDto create(EmployeeDto employeeDto) {
-        return convertToEmployeeDTO(this.employeeRepo.create(employeeDto.getFirstName(), employeeDto.getLastName(), employeeDto.getPesel(), employeeDto.getSalary()));
+        Employee employee = this.employeeRepo.create(employeeDto.getFirstName(), employeeDto.getLastName(), employeeDto.getPesel(), employeeDto.getSalary());
+        return convertToEmployeeDTO(employee);
     }
 
     @Override
@@ -36,15 +37,21 @@ public class EmployeeServiceImpl implements EmployeeService{
     }
 
     public EmployeeDto convertToEmployeeDTO(Employee employee) {
-        EmployeeDto employeeDTO = new EmployeeDto();
-        BeanUtils.copyProperties(employee, employeeDTO);
+        EmployeeDto employeeDTO = new EmployeeDto(employee.getFirstName(),
+                employee.getLastName(),
+                employee.getPesel(),
+                employee.getSalary());
+
 
         return employeeDTO;
     }
 
     public Employee convertToEmployee(EmployeeDto employeeDto) {
-        Employee employee = new Employee();
-        BeanUtils.copyProperties(employeeDto, employee);
+        Employee employee = new Employee(employeeDto.getFirstName(),
+                employeeDto.getLastName(),
+                employeeDto.getPesel(),
+                employeeDto.getSalary());
+
 
         return employee;
     }

@@ -57,7 +57,7 @@ public class EmployeeRepositoryDefault implements EmployeeRepo {
 
         Employee set = this.employeeList.set(index, employee);
         System.out.println(set);
-        return set;
+        return get(employee.getPesel());
     }
 
     @Override
