@@ -8,24 +8,25 @@ import pl.com.company.repository.EmployeeRepo;
 import java.math.BigDecimal;
 
 @RestController
+@RequestMapping("/api")
 public class EmployeeController {
 
-    @GetMapping
+    @GetMapping("/")
     public Employee get() {
         return createEmployee();
     }
 
-    @PostMapping
+    @PostMapping("/")
     public Employee create(EmployeeDto dto) {
         return createEmployee();
     }
 
-    @PutMapping
+    @PutMapping("/")
     public Employee update(EmployeeDto dto) {
         return createEmployee();
     }
 
-    @DeleteMapping
+    @DeleteMapping("/")
     public boolean delete(String pesel) {
         return true;
     }

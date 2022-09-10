@@ -56,7 +56,6 @@ public class EmployeeRepositoryDefault implements EmployeeRepo {
         int index = this.employeeList.indexOf(oldEmployee);
 
         Employee set = this.employeeList.set(index, employee);
-        System.out.println(set);
         return get(employee.getPesel());
     }
 
