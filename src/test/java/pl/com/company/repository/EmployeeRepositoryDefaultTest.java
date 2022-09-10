@@ -88,9 +88,11 @@ public class EmployeeRepositoryDefaultTest {
     void update() {
         Employee newEmployee = new Employee(FIRST_NAME_TEST_2, LAST_NAME_TEST_2, PESEL_TEST, SALARY_TEST_2);
 
-        assertEquals(newEmployee.getFirstName(), FIRST_NAME_TEST_2);
-        assertEquals(newEmployee.getLastName(), LAST_NAME_TEST_2);
-        assertEquals(newEmployee.getSalary(), SALARY_TEST_2);
+        Employee updatedEmployee = employeeRepo.update(newEmployee);
+
+        assertEquals(updatedEmployee.getFirstName(), FIRST_NAME_TEST_2);
+        assertEquals(updatedEmployee.getLastName(), LAST_NAME_TEST_2);
+        assertEquals(updatedEmployee.getSalary(), SALARY_TEST_2);
     }
 
     @Test
