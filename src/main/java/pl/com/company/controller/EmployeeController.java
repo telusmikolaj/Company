@@ -2,39 +2,36 @@ package pl.com.company.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import pl.com.company.model.Employee;
-import pl.com.company.repository.EmployeeRepo;
-
-import java.math.BigDecimal;
+import pl.com.company.service.EmployeeServiceImpl;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/employee")
 public class EmployeeController {
 
-    @GetMapping("/")
-    public Employee get() {
-        return createEmployee();
+    private final EmployeeServiceImpl employeeService;
+
+    @Autowired
+    public EmployeeController(EmployeeServiceImpl employeeService) {
+        this.employeeService = employeeService;
     }
 
-    @PostMapping("/")
-    public Employee create(EmployeeDto dto) {
-        return createEmployee();
+    @GetMapping("/{pesel}")
+    public EmployeeDto get(@PathVariable String pesel) {
+        return this.employeeService.get(pesel);
     }
 
-    @PutMapping("/")
-    public Employee update(EmployeeDto dto) {
-        return createEmployee();
+    @PostMapping()
+    public EmployeeDto create(@RequestBody EmployeeDto dto) {
+        return this.employeeService.create(dto);
     }
 
-    @DeleteMapping("/")
-    public boolean delete(String pesel) {
-        return true;
+    @PutMapping()
+    public EmployeeDto update(@RequestBody EmployeeDto dto) {
+        return this.employeeService.update(dto);
     }
 
-    private Employee createEmployee() {
-        return new Employee("TEST_NAME",
-                "TEST_LAST_NAME",
-                "TEST_PESEL",
-                BigDecimal.valueOf(1000));
+    @DeleteMapping("/{pesel}")
+    public boolean delete(@PathVariable String pesel) {
+        return this.employeeService.delete(pesel);
     }
 }
