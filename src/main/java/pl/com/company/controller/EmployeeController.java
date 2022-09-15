@@ -1,16 +1,19 @@
 package pl.com.company.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import pl.com.company.service.EmployeeService;
+import pl.com.company.service.EmployeeServiceImpl;
 
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/employee")
 public class EmployeeController {
 
-    private final EmployeeService employeeService;
+    private final EmployeeServiceImpl employeeService;
 
-    public EmployeeController(EmployeeService employeeService) {
+    @Autowired
+    public EmployeeController(EmployeeServiceImpl employeeService) {
         this.employeeService = employeeService;
     }
 
@@ -19,13 +22,13 @@ public class EmployeeController {
         return this.employeeService.get(pesel);
     }
 
-    @PostMapping
-    public EmployeeDto create(@RequestBody EmployeeDto dto) {
+    @PostMapping()
+    public EmployeeDto create(@Valid @RequestBody EmployeeDto dto) {
         return this.employeeService.create(dto);
     }
 
-    @PutMapping
-    public EmployeeDto update(@RequestBody EmployeeDto dto) {
+    @PutMapping()
+    public EmployeeDto update(@Valid @RequestBody EmployeeDto dto) {
         return this.employeeService.update(dto);
     }
 
@@ -33,5 +36,4 @@ public class EmployeeController {
     public boolean delete(@PathVariable String pesel) {
         return this.employeeService.delete(pesel);
     }
-
 }

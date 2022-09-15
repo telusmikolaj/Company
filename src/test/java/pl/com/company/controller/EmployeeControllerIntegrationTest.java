@@ -4,212 +4,142 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import pl.com.company.exception.EmployeeNotFoundException;
-import pl.com.company.exception.PeselAlreadyExsistException;
-import pl.com.company.repository.EmployeeRepo;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import pl.com.company.exception.EmployeeException;
+import pl.com.company.service.EmployeeService;
 
 import java.math.BigDecimal;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.assertj.core.api.Assertions.assertThat;
-
+@RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class EmployeeControllerIntegrationTest {
+class EmployeeControllerIntegrationTest {
 
-    private static final String FIRST_NAME_TEST = "TEST_NAME";
-    private static final String LAST_NAME_TEST = "TEST_LAST_NAME";
-    private static final String PESEL_TEST = "12345678910";
-    private static final BigDecimal SALARY_TEST = BigDecimal.TEN;
+    private static final String FIRST_NAME_ONE = "Johnny";
+    private static final String LAST_NAME_ONE = "Bean";
+    private static final String PESEL_ONE = "0";
+    private static final BigDecimal SALARY_ONE = BigDecimal.ONE;
 
-    private static final String NO_EXSISTING_PESEL = "11111111111";
+    private static final String FIRST_NAME_TWO = "Rowan";
+    private static final String LAST_NAME_TWO = "Atkinson";
+    private static final String PESEL_TWO = "1";
+    private static final BigDecimal SALARY_TWO = BigDecimal.TEN;
+
+    private EmployeeDto employeeDto;
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private EmployeeService employeeService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    EmployeeRepo employeeRepo;
-
-
     @BeforeEach
-    public void setup() {
-        this.employeeRepo.create(FIRST_NAME_TEST, LAST_NAME_TEST, PESEL_TEST, SALARY_TEST);
+    public void setUp() {
+        EmployeeDto employeeDto = new EmployeeDto(FIRST_NAME_ONE, LAST_NAME_ONE, PESEL_ONE, SALARY_ONE);
+        this.employeeDto = this.employeeService.create(employeeDto);
     }
 
     @AfterEach
-    public void tearDown() {
-        this.employeeRepo.clear();
+    public void clear() {
+        if (null != this.employeeService.get(PESEL_ONE)) {
+            this.employeeService.delete(PESEL_ONE);
+            this.employeeDto = null;
+        }
     }
 
     @Test
     void get() throws Exception {
+        MvcResult result = sendRequest(MockMvcRequestBuilders.get("/employee/" + PESEL_ONE).contentType(MediaType.APPLICATION_JSON), HttpStatus.OK);
 
-        MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.get("/employee/{pesel}",PESEL_TEST))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andReturn();
+        EmployeeDto employeeDtoResponse = objectMapper.readValue(result.getResponse().getContentAsString(), EmployeeDto.class);
 
-        EmployeeDto employeeDto = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), EmployeeDto.class);
-        assertThat(employeeDto).isNotNull();
-        assertThat(employeeDto.getPesel()).isEqualTo(PESEL_TEST);
+        assertNotNull(employeeDtoResponse);
+        assertEquals(this.employeeDto.getFirstName(), employeeDtoResponse.getFirstName());
+        assertEquals(this.employeeDto.getLastName(), employeeDtoResponse.getLastName());
+        assertEquals(this.employeeDto.getPesel(), employeeDtoResponse.getPesel());
+        assertEquals(this.employeeDto.getSalary(), employeeDtoResponse.getSalary());
     }
 
     @Test
     void create() throws Exception {
+        String employeeDtoAsJson = objectMapper.writeValueAsString(new EmployeeDto(FIRST_NAME_TWO, LAST_NAME_TWO, PESEL_TWO, SALARY_TWO));
+        MvcResult result = sendRequest(MockMvcRequestBuilders.post("/employee").content(employeeDtoAsJson).contentType(MediaType.APPLICATION_JSON), HttpStatus.OK);
 
-        EmployeeDto employeeDto = new EmployeeDto("NAME", "LASTNAME", "85120609281", BigDecimal.TEN);
+        EmployeeDto employeeDtoResponse = objectMapper.readValue(result.getResponse().getContentAsString(), EmployeeDto.class);
 
-        String employeeJSON = objectMapper.writeValueAsString(employeeDto);
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/employee")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(employeeJSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value(employeeDto.getFirstName()))
-                .andExpect(jsonPath("$.lastName").value(employeeDto.getLastName()))
-                .andExpect(jsonPath("$.pesel").value(employeeDto.getPesel()))
-                .andExpect(jsonPath("$.salary").value(employeeDto.getSalary()));
+        assertNotNull(employeeDtoResponse);
+        assertEquals(FIRST_NAME_TWO, employeeDtoResponse.getFirstName());
+        assertEquals(LAST_NAME_TWO, employeeDtoResponse.getLastName());
+        assertEquals(PESEL_TWO, employeeDtoResponse.getPesel());
+        assertEquals(SALARY_TWO, employeeDtoResponse.getSalary());
+    }
 
+    @Test
+    void cannotCreateSecondEmployeeWithExistingPesel() throws Exception {
+        String employeeDtoAsJson = objectMapper.writeValueAsString(new EmployeeDto(FIRST_NAME_TWO, LAST_NAME_TWO, PESEL_ONE, SALARY_TWO));
+        MvcResult result = sendRequest(MockMvcRequestBuilders.post("/employee").content(employeeDtoAsJson).contentType(MediaType.APPLICATION_JSON), HttpStatus.CONFLICT);
+
+        EmployeeException exceptionDtoResponse = objectMapper.readValue(result.getResponse().getContentAsString(), EmployeeException.class);
+        assertEquals("Pesel already exist " + PESEL_ONE, exceptionDtoResponse.getMessage());
     }
 
     @Test
     void update() throws Exception {
-        EmployeeDto toUpdate = new EmployeeDto("UPDATED_FIRST_NAME", "UPDATED_LAST_NAME", PESEL_TEST, BigDecimal.TEN);
+        String employeeDtoAsJson = objectMapper.writeValueAsString(new EmployeeDto(FIRST_NAME_TWO, LAST_NAME_TWO, PESEL_ONE, SALARY_TWO));
+        MvcResult result = sendRequest(MockMvcRequestBuilders.put("/employee").content(employeeDtoAsJson).contentType(MediaType.APPLICATION_JSON), HttpStatus.OK);
 
-        String toUpdateJSON = objectMapper.writeValueAsString(toUpdate);
-        this.mockMvc.perform(MockMvcRequestBuilders.put("/employee")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(toUpdateJSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value(toUpdate.getFirstName()))
-                .andExpect(jsonPath("$.lastName").value(toUpdate.getLastName()))
-                .andExpect(jsonPath("$.pesel").value(toUpdate.getPesel()))
-                .andExpect(jsonPath("$.salary").value(toUpdate.getSalary()));
+        EmployeeDto employeeDtoResponse = objectMapper.readValue(result.getResponse().getContentAsString(), EmployeeDto.class);
+
+        assertNotNull(employeeDtoResponse);
+        assertEquals(FIRST_NAME_TWO, employeeDtoResponse.getFirstName());
+        assertEquals(LAST_NAME_TWO, employeeDtoResponse.getLastName());
+        assertEquals(PESEL_ONE, employeeDtoResponse.getPesel());
+        assertEquals(SALARY_TWO, employeeDtoResponse.getSalary());
     }
 
     @Test
     void delete() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders
-                        .delete("/employee/{pesel}", PESEL_TEST)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        MvcResult result = sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_ONE).contentType(MediaType.APPLICATION_JSON), HttpStatus.OK);
+
+        boolean isDeleted = objectMapper.readValue(result.getResponse().getContentAsString(), Boolean.class);
+
+        assertTrue(isDeleted);
     }
 
     @Test
-    void getWithNonExsistingPeselShouldRespondNotFoundAndThrowEmployeeNotFoundException() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/employee/{pesel}",NO_EXSISTING_PESEL))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-                .andExpect(result -> assertThat(result.getResolvedException() instanceof EmployeeNotFoundException).isTrue());
+    void cannotDeleteNotExistingEmployee() throws Exception {
+        sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_ONE).contentType(MediaType.APPLICATION_JSON), HttpStatus.OK);
+
+        MvcResult result = sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_ONE).contentType(MediaType.APPLICATION_JSON), HttpStatus.CONFLICT);
+        EmployeeException employeeDtoResponse = objectMapper.readValue(result.getResponse().getContentAsString(), EmployeeException.class);
+
+        assertEquals("Employee with pesel: " + PESEL_ONE + " does not exist", employeeDtoResponse.getMessage());
 
     }
 
-    @Test
-    void createEmployeeWithExistingPeselShouldRespondBadRequestAndPeselAlreadyExistException() throws Exception {
-        EmployeeDto duplicateEmployee = new EmployeeDto(FIRST_NAME_TEST, LAST_NAME_TEST, PESEL_TEST, BigDecimal.TEN);
-        String duplicateJSON = objectMapper.writeValueAsString(duplicateEmployee);
-
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/employee")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(duplicateJSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertThat(result.getResolvedException() instanceof PeselAlreadyExsistException).isTrue());
+    private MvcResult sendRequest(RequestBuilder request, HttpStatus expectedStatus) throws Exception {
+        return mockMvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().is(expectedStatus.value()))
+                .andExpect(MockMvcResultMatchers.content()
+                        .contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andReturn();
     }
-
-    @Test
-    void createEmployeeWithInvalidPeselFormatShouldRespondBadRequestAndThrowMethodArgumentNotValidException() throws Exception {
-
-        EmployeeDto invalidPeselEmployee = new EmployeeDto(FIRST_NAME_TEST, LAST_NAME_TEST, "123", BigDecimal.TEN);
-        String inalidPeselJSON = objectMapper.writeValueAsString(invalidPeselEmployee);
-
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/employee")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(inalidPeselJSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertThat(result.getResolvedException() instanceof MethodArgumentNotValidException).isTrue());
-    }
-
-    @Test
-    void deleteWithNonExsistingPeselShouldRespondNotFoundAndThrowEmployeeNotFoundException() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/employee/{pesel}",NO_EXSISTING_PESEL))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-                .andExpect(result -> assertThat(result.getResolvedException() instanceof EmployeeNotFoundException).isTrue());
-
-    }
-
-    @Test
-    void updateWithNonExsistingPeselShouldRespondNotFoundAndThrowEmployeeNotFoundException() throws Exception {
-
-        EmployeeDto nonExistingEmployee = new EmployeeDto(FIRST_NAME_TEST, LAST_NAME_TEST, NO_EXSISTING_PESEL, BigDecimal.TEN);
-        String invalidPeselJSON = objectMapper.writeValueAsString(nonExistingEmployee);
-
-        this.mockMvc.perform(MockMvcRequestBuilders.put("/employee")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidPeselJSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(result -> assertThat(result.getResolvedException() instanceof EmployeeNotFoundException).isTrue());
-    }
-
-    @Test
-    void createEmployeeWithBlankFirstNameShouldRespondBadRequestAndThrowMethodArgumentNotValidException() throws Exception {
-
-        EmployeeDto invalidEmployee = new EmployeeDto("", LAST_NAME_TEST, "123", BigDecimal.TEN);
-        String invalidJSON = objectMapper.writeValueAsString(invalidEmployee);
-
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/employee")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertThat(result.getResolvedException() instanceof MethodArgumentNotValidException).isTrue());
-    }
-
-    @Test
-    void createEmployeeWithBlankLastNameShouldRespondBadRequestAndThrowMethodArgumentNotValidException() throws Exception {
-
-        EmployeeDto invalidEmployee = new EmployeeDto(FIRST_NAME_TEST, "", "123", BigDecimal.TEN);
-        String invalidJSON = objectMapper.writeValueAsString(invalidEmployee);
-
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/employee")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertThat(result.getResolvedException() instanceof MethodArgumentNotValidException).isTrue());
-    }
-
-    @Test
-    void createEmployeeWithBlankPeselShouldRespondBadRequestAndThrowMethodArgumentNotValidException() throws Exception {
-
-        EmployeeDto invalidEmployee = new EmployeeDto(FIRST_NAME_TEST, LAST_NAME_TEST, "", BigDecimal.TEN);
-        String invalidJSON = objectMapper.writeValueAsString(invalidEmployee);
-
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/employee")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> assertThat(result.getResolvedException() instanceof MethodArgumentNotValidException).isTrue());
-    }
-
-
 }
