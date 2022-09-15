@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import pl.com.company.service.EmployeeServiceImpl;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("/employee")
 public class EmployeeController {
@@ -21,12 +23,12 @@ public class EmployeeController {
     }
 
     @PostMapping()
-    public EmployeeDto create(@RequestBody EmployeeDto dto) {
+    public EmployeeDto create(@Valid @RequestBody EmployeeDto dto) {
         return this.employeeService.create(dto);
     }
 
     @PutMapping()
-    public EmployeeDto update(@RequestBody EmployeeDto dto) {
+    public EmployeeDto update(@Valid @RequestBody EmployeeDto dto) {
         return this.employeeService.update(dto);
     }
 

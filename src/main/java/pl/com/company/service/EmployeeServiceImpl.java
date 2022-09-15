@@ -8,6 +8,7 @@ import pl.com.company.model.Employee;
 import pl.com.company.repository.EmployeeRepo;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService{
@@ -37,13 +38,16 @@ public class EmployeeServiceImpl implements EmployeeService{
     }
 
     public EmployeeDto convertToEmployeeDTO(Employee employee) {
-        EmployeeDto employeeDTO = new EmployeeDto(employee.getFirstName(),
-                employee.getLastName(),
-                employee.getPesel(),
-                employee.getSalary());
+        if (Objects.nonNull(employee)) {
+            EmployeeDto employeeDTO = new EmployeeDto(employee.getFirstName(),
+                    employee.getLastName(),
+                    employee.getPesel(),
+                    employee.getSalary());
 
 
-        return employeeDTO;
+            return employeeDTO;
+        }
+        return null;
     }
 
     public Employee convertToEmployee(EmployeeDto employeeDto) {
