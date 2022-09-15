@@ -1,6 +1,7 @@
 package pl.com.company.repository;
 
 import org.springframework.stereotype.Repository;
+import pl.com.company.exception.EmployeeRequestException;
 import pl.com.company.model.Employee;
 
 import java.math.BigDecimal;
@@ -19,7 +20,7 @@ public class EmployeeRepositoryDefault implements EmployeeRepo {
         Employee employee1 = this.get(pesel);
 
         if (employee1 != null) {
-            throw new IllegalArgumentException("Pesel already exist " + pesel);
+            throw new EmployeeRequestException("Pesel already exist " + pesel);
         }
 
         employeeList.add(employee);
@@ -47,6 +48,12 @@ public class EmployeeRepositoryDefault implements EmployeeRepo {
 
     @Override
     public boolean delete(String pesel) {
+        Employee employeeToDelete = this.get(pesel);
+
+        if (null == employeeToDelete) {
+            throw new EmployeeRequestException("Employee with pesel: " + pesel + " does not exist");
+        }
+
         return employeeList.remove(this.get(pesel));
     }
 

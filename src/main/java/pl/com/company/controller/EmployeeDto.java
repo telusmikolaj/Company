@@ -1,11 +1,15 @@
 package pl.com.company.controller;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public class EmployeeDto {
 
     private String firstName;
     private String lastName;
+    @NotEmpty
+    @NotNull(message = "pesel cannot be null")
     private String pesel;
     private BigDecimal salary;
 
