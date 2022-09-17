@@ -3,6 +3,7 @@ package pl.com.company.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@Disabled
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -59,10 +61,8 @@ class EmployeeControllerIntegrationTest {
 
     @AfterEach
     public void clear() {
-        if (null != this.employeeService.get(PESEL_ONE)) {
             this.employeeService.delete(PESEL_ONE);
             this.employeeDto = null;
-        }
     }
 
     @Test
@@ -119,7 +119,8 @@ class EmployeeControllerIntegrationTest {
 
     @Test
     void delete() throws Exception {
-        MvcResult result = sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_ONE).contentType(MediaType.APPLICATION_JSON), HttpStatus.OK);
+        employeeService.create(new EmployeeDto(FIRST_NAME_ONE, LAST_NAME_ONE, PESEL_TWO, SALARY_TWO ));
+        MvcResult result = sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_TWO).contentType(MediaType.APPLICATION_JSON), HttpStatus.OK);
 
         boolean isDeleted = objectMapper.readValue(result.getResponse().getContentAsString(), Boolean.class);
 
@@ -128,12 +129,11 @@ class EmployeeControllerIntegrationTest {
 
     @Test
     void cannotDeleteNotExistingEmployee() throws Exception {
-        sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_ONE).contentType(MediaType.APPLICATION_JSON), HttpStatus.OK);
 
-        MvcResult result = sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_ONE).contentType(MediaType.APPLICATION_JSON), HttpStatus.NOT_FOUND);
+        MvcResult result = sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_TWO).contentType(MediaType.APPLICATION_JSON), HttpStatus.NOT_FOUND);
         ErrorInfo employeeDtoResponse = objectMapper.readValue(result.getResponse().getContentAsString(), ErrorInfo.class);
 
-        assertEquals("An employee with pesel " + PESEL_ONE + " not found!", employeeDtoResponse.getMessage());
+        assertEquals("An employee with pesel " + PESEL_TWO + " not found!", employeeDtoResponse.getMessage());
 
     }
 

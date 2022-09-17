@@ -1,9 +1,6 @@
 package pl.com.company.repository;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import pl.com.company.exception.EmployeeAlreadyExistsException;
@@ -13,9 +10,9 @@ import pl.com.company.exception.EmployeeSalaryDataNotFoundException;
 import pl.com.company.model.Employee;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest
 public class EmployeeRepositoryDefaultTest {
 
@@ -34,15 +31,19 @@ public class EmployeeRepositoryDefaultTest {
 
     private Employee employee;
 
+    private Employee employee1;
+
     @BeforeEach
     void setUp() {
-        this.employee = employeeRepo.create(FIRST_NAME_TEST, LAST_NAME_TEST, PESEL_TEST, SALARY_TEST);
+        this.employee = employeeRepo.create(new Employee(FIRST_NAME_TEST, LAST_NAME_TEST, PESEL_TEST, SALARY_TEST));
+        employee1 = employeeRepo.create(new Employee(FIRST_NAME_TEST_2, LAST_NAME_TEST_2, PESEL_TEST_2, SALARY_TEST_2));
+
     }
 
     @AfterEach
     void tearDown() {
         this.employee = null;
-        this.employeeRepo.clear();
+        this.employeeRepo.deleteAll();
     }
 
     @Test
@@ -56,36 +57,19 @@ public class EmployeeRepositoryDefaultTest {
     }
 
     @Test
-    void create2SamePesel() {
-
-        Assertions.assertThrows(EmployeeAlreadyExistsException.class, () -> {
-            employeeRepo.create(FIRST_NAME_TEST, LAST_NAME_TEST, PESEL_TEST, SALARY_TEST);
-        });
-
-    }
-
-    @Test
     void get() {
-        Employee employee1 = employeeRepo.get(PESEL_TEST);
+        List<Employee> employeeList = employeeRepo.get(PESEL_TEST);
 
-        assertEquals(employee, employee1);
-    }
-
-    @Test
-    void getNotFoundTest() {
-
-        Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
-            Employee employee1 = employeeRepo.get(PESEL_TEST + "1");
-        });
-
+        assertEquals(employee, employeeList.get(0));
     }
 
     @Test
     void delete() {
-        assertEquals(employeeRepo.size(), 1);
+        assertEquals(employeeRepo.size(), 2);
 
         employeeRepo.delete(employee.getPesel());
-        assertEquals(employeeRepo.size(), 0);
+
+        assertEquals(employeeRepo.size(), 1);
 
     }
 
@@ -101,11 +85,37 @@ public class EmployeeRepositoryDefaultTest {
     }
 
     @Test
-    void updateNotExistingEmployee() {
-        Employee newEmployee = new Employee(FIRST_NAME_TEST_2, LAST_NAME_TEST_2, PESEL_TEST_2, SALARY_TEST_2);
-
-        Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
-            employeeRepo.update(newEmployee);
-        });
+    void isEmployeeExsists() {
+        assertTrue(employeeRepo.isEmployeeExists(PESEL_TEST));
+        assertFalse(employeeRepo.isEmployeeExists("123"));
     }
+
+    @Test
+    void loadAll() {
+        List<Employee> employeeList = employeeRepo.getAll();
+
+        assertEquals(employeeList.size(), 2);
+
+    }
+
+    @Test
+    void getAll() {
+        List<Employee> employeeList = employeeRepo.getAll();
+
+        assertEquals(employee, employeeList.get(0));
+        assertEquals(employee1, employeeList.get(1));
+    }
+
+    @Test
+    void deleteAll() {
+        employeeRepo.deleteAll();
+        assertEquals(employeeRepo.size(), 0);
+    }
+
+    @Test
+    void size() {
+        assertEquals(employeeRepo.size(),2);
+    }
+
+
 }

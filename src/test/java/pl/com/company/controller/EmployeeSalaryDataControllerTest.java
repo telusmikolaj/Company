@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import pl.com.company.exception.ErrorInfo;
+import pl.com.company.model.Employee;
 import pl.com.company.model.EmployeeSalaryData;
 import pl.com.company.repository.EmployeeRepo;
 import pl.com.company.repository.EmployeeSalaryDataRepo;
@@ -29,7 +30,6 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -80,9 +80,9 @@ class EmployeeSalaryDataControllerTest {
     @BeforeEach
     public void setup() {
         this.salaryDataDto = new EmployeeSalaryDataDto(PESEL_TEST, MONTH_TEST, YEAR_TEST, SALARY_TEST);
-        this.employeeRepo.create(FIRST_NAME_ONE, LAST_NAME_ONE, PESEL_TEST, SALARY_TEST);
-        this.salaryDataRepo.create(PESEL_TEST, MONTH_TEST, YEAR_TEST, SALARY_TEST);
-        this.salaryDataRepo.create(PESEL_TEST, MONTH_TWO, YEAR_TWO, SALARY_TWO);
+        this.employeeRepo.create(new Employee(FIRST_NAME_ONE, LAST_NAME_ONE, PESEL_TEST, SALARY_TEST));
+        this.salaryDataRepo.create(new EmployeeSalaryData(PESEL_TEST, MONTH_TEST, YEAR_TEST, SALARY_TEST));
+        this.salaryDataRepo.create(new EmployeeSalaryData(PESEL_TEST, MONTH_TWO, YEAR_TWO, SALARY_TWO));
 
         this.salaryDtoListForUpdate = new ArrayList<>(Arrays.asList(this.salaryDataDto));
 
@@ -90,7 +90,7 @@ class EmployeeSalaryDataControllerTest {
 
     @AfterEach
     public void tearDown() {
-        this.employeeRepo.clear();
+        this.employeeRepo.deleteAll();
         this.salaryDataRepo.deleteAll();
 
     }
@@ -191,7 +191,7 @@ class EmployeeSalaryDataControllerTest {
 
         ErrorInfo exceptionDtoResponse = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), ErrorInfo.class);
 
-        assertEquals("Salary data: pesel: " + PESEL_TEST + " " + NOT_EXISTING_MONTH + "-" + NOT_EXISTING_YEAR + " does not exists!",
+        assertEquals("Salary data: pesel: " + PESEL_TEST + " " + NOT_EXISTING_YEAR + "-" + NOT_EXISTING_MONTH + " does not exists!",
                 exceptionDtoResponse.getMessage());
     }
 
