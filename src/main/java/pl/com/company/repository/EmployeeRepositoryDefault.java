@@ -1,6 +1,7 @@
 package pl.com.company.repository;
 
 import org.springframework.stereotype.Repository;
+import pl.com.company.aop.Timed;
 import pl.com.company.exception.EmployeeRequestException;
 import pl.com.company.model.Employee;
 
@@ -14,6 +15,7 @@ public class EmployeeRepositoryDefault implements EmployeeRepo {
     private List<Employee> employeeList = new ArrayList<>();
 
     @Override
+    @Timed
     public Employee create(String firstName, String lastName, String pesel, BigDecimal salary) {
 
         Employee employee = new Employee(firstName, lastName, pesel, salary);
