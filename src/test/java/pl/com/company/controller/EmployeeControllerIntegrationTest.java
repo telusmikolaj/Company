@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import pl.com.company.exception.EmployeeException;
+import pl.com.company.exception.ErrorInfo;
 import pl.com.company.service.EmployeeService;
 
 import java.math.BigDecimal;
@@ -32,12 +32,12 @@ class EmployeeControllerIntegrationTest {
 
     private static final String FIRST_NAME_ONE = "Johnny";
     private static final String LAST_NAME_ONE = "Bean";
-    private static final String PESEL_ONE = "0";
+    private static final String PESEL_ONE = "74120622341";
     private static final BigDecimal SALARY_ONE = BigDecimal.ONE;
 
     private static final String FIRST_NAME_TWO = "Rowan";
     private static final String LAST_NAME_TWO = "Atkinson";
-    private static final String PESEL_TWO = "1";
+    private static final String PESEL_TWO = "94120723021";
     private static final BigDecimal SALARY_TWO = BigDecimal.TEN;
 
     private EmployeeDto employeeDto;
@@ -90,15 +90,17 @@ class EmployeeControllerIntegrationTest {
         assertEquals(LAST_NAME_TWO, employeeDtoResponse.getLastName());
         assertEquals(PESEL_TWO, employeeDtoResponse.getPesel());
         assertEquals(SALARY_TWO, employeeDtoResponse.getSalary());
+
+        this.employeeService.delete(PESEL_TWO);
     }
 
     @Test
     void cannotCreateSecondEmployeeWithExistingPesel() throws Exception {
         String employeeDtoAsJson = objectMapper.writeValueAsString(new EmployeeDto(FIRST_NAME_TWO, LAST_NAME_TWO, PESEL_ONE, SALARY_TWO));
-        MvcResult result = sendRequest(MockMvcRequestBuilders.post("/employee").content(employeeDtoAsJson).contentType(MediaType.APPLICATION_JSON), HttpStatus.CONFLICT);
+        MvcResult result = sendRequest(MockMvcRequestBuilders.post("/employee").content(employeeDtoAsJson).contentType(MediaType.APPLICATION_JSON), HttpStatus.BAD_REQUEST);
 
-        EmployeeException exceptionDtoResponse = objectMapper.readValue(result.getResponse().getContentAsString(), EmployeeException.class);
-        assertEquals("Pesel already exist " + PESEL_ONE, exceptionDtoResponse.getMessage());
+        ErrorInfo exceptionDtoResponse = objectMapper.readValue(result.getResponse().getContentAsString(), ErrorInfo.class);
+        assertEquals("An employee with pesel " + PESEL_ONE + " already exists!", exceptionDtoResponse.getMessage());
     }
 
     @Test
@@ -128,10 +130,10 @@ class EmployeeControllerIntegrationTest {
     void cannotDeleteNotExistingEmployee() throws Exception {
         sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_ONE).contentType(MediaType.APPLICATION_JSON), HttpStatus.OK);
 
-        MvcResult result = sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_ONE).contentType(MediaType.APPLICATION_JSON), HttpStatus.CONFLICT);
-        EmployeeException employeeDtoResponse = objectMapper.readValue(result.getResponse().getContentAsString(), EmployeeException.class);
+        MvcResult result = sendRequest(MockMvcRequestBuilders.delete("/employee/{pesel}", PESEL_ONE).contentType(MediaType.APPLICATION_JSON), HttpStatus.NOT_FOUND);
+        ErrorInfo employeeDtoResponse = objectMapper.readValue(result.getResponse().getContentAsString(), ErrorInfo.class);
 
-        assertEquals("Employee with pesel: " + PESEL_ONE + " does not exist", employeeDtoResponse.getMessage());
+        assertEquals("An employee with pesel " + PESEL_ONE + " not found!", employeeDtoResponse.getMessage());
 
     }
 

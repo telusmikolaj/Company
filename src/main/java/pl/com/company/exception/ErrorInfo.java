@@ -4,12 +4,12 @@ import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 
-public class EmployeeException {
+public class ErrorInfo {
     private final String message;
     private final HttpStatus httpStatus;
     private final LocalDateTime timestamp;
 
-    public EmployeeException(String message, HttpStatus httpStatus, LocalDateTime timestamp) {
+    public ErrorInfo(String message, HttpStatus httpStatus, LocalDateTime timestamp) {
         this.message = message;
         this.httpStatus = httpStatus;
         this.timestamp = timestamp;

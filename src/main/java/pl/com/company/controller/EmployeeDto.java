@@ -1,16 +1,22 @@
 package pl.com.company.controller;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 
 public class EmployeeDto {
 
+    @NotBlank(message = "{firstName.notblank}")
     private String firstName;
+    @NotBlank(message = "{lastName.notblank}")
     private String lastName;
+    @NotBlank(message = "{pesel.notblank}")
+    @Pattern(regexp = "^\\d{11}$", message = "{pesel.invalidFormat}")
     @NotEmpty
     @NotNull(message = "pesel cannot be null")
+    @Pattern(regexp = "^\\d{11}$", message = "Invalid Pesel format")
     private String pesel;
+    @NotNull(message = "{salary.null}")
+    @Min(value = 1, message = "{invalid.salary}")
     private BigDecimal salary;
 
 

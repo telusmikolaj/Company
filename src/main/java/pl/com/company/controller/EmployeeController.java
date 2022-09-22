@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import pl.com.company.service.EmployeeServiceImpl;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Pattern;
 
 @RestController
 @RequestMapping("/employee")

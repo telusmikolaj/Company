@@ -6,7 +6,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import pl.com.company.exception.EmployeeAlreadyExistsException;
+import pl.com.company.exception.EmployeeNotFoundException;
 import pl.com.company.exception.EmployeeRequestException;
+import pl.com.company.exception.EmployeeSalaryDataNotFoundException;
 import pl.com.company.model.Employee;
 
 import java.math.BigDecimal;
@@ -55,7 +58,7 @@ public class EmployeeRepositoryDefaultTest {
     @Test
     void create2SamePesel() {
 
-        Assertions.assertThrows(EmployeeRequestException.class, () -> {
+        Assertions.assertThrows(EmployeeAlreadyExistsException.class, () -> {
             employeeRepo.create(FIRST_NAME_TEST, LAST_NAME_TEST, PESEL_TEST, SALARY_TEST);
         });
 
@@ -70,9 +73,11 @@ public class EmployeeRepositoryDefaultTest {
 
     @Test
     void getNotFoundTest() {
-        Employee employee1 = employeeRepo.get(PESEL_TEST + "1");
 
-        assertNull(employee1);
+        Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
+            Employee employee1 = employeeRepo.get(PESEL_TEST + "1");
+        });
+
     }
 
     @Test
@@ -99,7 +104,7 @@ public class EmployeeRepositoryDefaultTest {
     void updateNotExistingEmployee() {
         Employee newEmployee = new Employee(FIRST_NAME_TEST_2, LAST_NAME_TEST_2, PESEL_TEST_2, SALARY_TEST_2);
 
-        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
+        Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
             employeeRepo.update(newEmployee);
         });
     }

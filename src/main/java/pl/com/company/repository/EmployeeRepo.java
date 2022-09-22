@@ -1,6 +1,8 @@
 package pl.com.company.repository;
 
+import org.springframework.stereotype.Repository;
 import pl.com.company.model.Employee;
+import pl.com.company.model.EmployeeSalaryData;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -11,7 +13,6 @@ public interface EmployeeRepo {
 
     Employee get(String pesel);
 
-    List<Employee> getAll();
 
     boolean delete(String pesel);
 
@@ -20,4 +21,10 @@ public interface EmployeeRepo {
     int size();
 
     boolean clear();
+    boolean checkIfEmployeeExists(String pesel);
+
+    void loadAll(List<Employee> employeeSalaryDataList);
+
+    List<Employee> getAll();
+
 }
