@@ -19,6 +19,8 @@ import java.util.List;
 @Component
 public class CacheService {
 
+
+
     @Autowired
     ObjectMapper objectMapper;
     private static FileWriter fileWriter;
@@ -60,5 +62,4 @@ public class CacheService {
 
         return Arrays.asList(objectMapper.readValue(jsonString, EmployeeSalaryData[].class));
     }
-
 }

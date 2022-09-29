@@ -23,7 +23,6 @@ pipelines:
         name: 'Deployment to Staging'
         deployment: staging
         script:
-          - mvn
           - echo "Your deployment to staging script goes here..."
     - step:
         name: 'Deployment to Production'

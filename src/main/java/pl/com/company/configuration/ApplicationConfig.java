@@ -1,29 +1,23 @@
 package pl.com.company.configuration;
 
 import org.springframework.context.annotation.Configuration;
-import pl.com.company.model.Employee;
-import pl.com.company.model.EmployeeSalaryData;
-import pl.com.company.repository.CacheService;
-import pl.com.company.repository.EmployeeRepo;
-import pl.com.company.repository.EmployeeSalaryDataRepo;
+import pl.com.company.repository.*;
+import pl.com.company.visitor.CacheLoadVisitor;
+import pl.com.company.visitor.CacheSaveVisitor;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.util.List;
 
 @Configuration
 public class ApplicationConfig {
 
     private final CacheService cacheService;
-    private final EmployeeRepo employeeRepo;
+    private final EmployeeRepositoryDefault employeeRepo;
+    private final EmployeeSalaryDataIRepoImpl employeeSalaryDataRepo;
 
-    private final EmployeeSalaryDataRepo employeeSalaryDataRepo;
-
-    private final String EMPLOYEES_FILE_PATH = "./src/main/resources/data_employees.json";
-    private final String EMPLOYEES_SALARY_DATA_FILE_PATH = "./src/main/resources/salary_data.json";
-
-    public ApplicationConfig(CacheService cacheService, EmployeeRepo employeeRepo, EmployeeSalaryDataRepo employeeSalaryDataRepo) {
+    public ApplicationConfig(CacheService cacheService, EmployeeRepositoryDefault employeeRepo,
+                             EmployeeSalaryDataIRepoImpl employeeSalaryDataRepo) {
         this.cacheService = cacheService;
         this.employeeRepo = employeeRepo;
         this.employeeSalaryDataRepo = employeeSalaryDataRepo;
@@ -31,13 +25,16 @@ public class ApplicationConfig {
 
     @PostConstruct
     public void initEmployeeData() throws IOException {
-        this.employeeRepo.loadAll((List<Employee>) this.cacheService.load(EMPLOYEES_FILE_PATH, "Employees"));
-        this.employeeSalaryDataRepo.loadAll((List<EmployeeSalaryData>) this.cacheService.load(EMPLOYEES_SALARY_DATA_FILE_PATH, "SalaryData"));
+        CacheLoadVisitor cacheLoadVisitor = new CacheLoadVisitor(cacheService);
+        this.employeeRepo.accept(cacheLoadVisitor);
+        this.employeeSalaryDataRepo.accept(cacheLoadVisitor);
     }
     @PreDestroy
     public void saveEmployeeData() throws IOException {
-        this.cacheService.saveToFile(EMPLOYEES_FILE_PATH, this.employeeRepo.getAll());
-        this.cacheService.saveToFile(EMPLOYEES_SALARY_DATA_FILE_PATH, this.employeeSalaryDataRepo.getAll());
+        CacheSaveVisitor cacheSaveVisitor = new CacheSaveVisitor(cacheService);
+        this.employeeRepo.accept(cacheSaveVisitor);
+        this.employeeSalaryDataRepo.accept(cacheSaveVisitor);
+
     }
 }
 

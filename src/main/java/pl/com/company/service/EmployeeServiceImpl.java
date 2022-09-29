@@ -1,62 +1,56 @@
 package pl.com.company.service;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pl.com.company.controller.EmployeeDto;
+import pl.com.company.exception.EmployeeAlreadyExistsException;
+import pl.com.company.exception.EmployeeNotFoundException;
+import pl.com.company.mapper.EmployeeMapper;
 import pl.com.company.model.Employee;
 import pl.com.company.repository.EmployeeRepo;
-
-import java.math.BigDecimal;
-import java.util.Objects;
-
+import pl.com.company.repository.EmployeeSalaryDataRepo;
 @Service
 public class EmployeeServiceImpl implements EmployeeService{
-
     @Autowired
-    EmployeeRepo employeeRepo;
-
+    private EmployeeRepo employeeRepo;
+    @Autowired
+    private EmployeeSalaryDataRepo employeeSalaryDataRepo;
+    @Autowired
+    private EmployeeMapper mapper;
     @Override
     public EmployeeDto create(EmployeeDto employeeDto) {
-        Employee employee = this.employeeRepo.create(employeeDto.getFirstName(), employeeDto.getLastName(), employeeDto.getPesel(), employeeDto.getSalary());
-        return convertToEmployeeDTO(employee);
+        if (this.employeeRepo.isEmployeeExists(employeeDto.getPesel())) {
+            throw new EmployeeAlreadyExistsException(employeeDto.getPesel());
+        }
+       Employee employee = this.employeeRepo.create(mapper.dtoToEmployee(employeeDto));
+
+        return mapper.employeeToDto(employee);
     }
 
     @Override
     public EmployeeDto update(EmployeeDto employeeDto) {
-        return convertToEmployeeDTO(this.employeeRepo.update(convertToEmployee(employeeDto)));
+        if (!this.employeeRepo.isEmployeeExists(employeeDto.getPesel())) {
+            throw new EmployeeNotFoundException(employeeDto.getPesel());
+        }
+        return mapper.employeeToDto(this.employeeRepo.update(mapper.dtoToEmployee(employeeDto)));
     }
 
     @Override
     public EmployeeDto get(String pesel) {
-        return convertToEmployeeDTO(this.employeeRepo.get(pesel));
+
+        if (!this.employeeRepo.isEmployeeExists(pesel)) {
+            throw new EmployeeNotFoundException(pesel);
+        }
+        Employee employee = this.employeeRepo.get(pesel).get(0);
+        return mapper.employeeToDto(employee);
     }
 
     @Override
     public boolean delete(String pesel) {
-        return this.employeeRepo.delete(pesel);
-    }
-
-    public EmployeeDto convertToEmployeeDTO(Employee employee) {
-        if (Objects.nonNull(employee)) {
-            EmployeeDto employeeDTO = new EmployeeDto(employee.getFirstName(),
-                    employee.getLastName(),
-                    employee.getPesel(),
-                    employee.getSalary());
-
-
-            return employeeDTO;
+        if (!this.employeeRepo.isEmployeeExists(pesel)) {
+            throw new EmployeeNotFoundException(pesel);
         }
-        return null;
-    }
-
-    public Employee convertToEmployee(EmployeeDto employeeDto) {
-        Employee employee = new Employee(employeeDto.getFirstName(),
-                employeeDto.getLastName(),
-                employeeDto.getPesel(),
-                employeeDto.getSalary());
-
-
-        return employee;
+        this.employeeSalaryDataRepo.delete(pesel);
+        return this.employeeRepo.delete(pesel);
     }
 }

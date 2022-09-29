@@ -5,9 +5,8 @@ import javax.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 
-public class EmployeeSalaryData {
+public class EmployeeSalaryData implements Entity  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,9 +42,6 @@ public class EmployeeSalaryData {
         this.id = id;
     }
 
-    public String getPesel() {
-        return pesel;
-    }
 
     public void setPesel(String pesel) {
         this.pesel = pesel;
@@ -89,5 +85,10 @@ public class EmployeeSalaryData {
 
     public void setYear(int year) {
         this.year = year;
+    }
+
+    @Override
+    public String getPesel() {
+        return this.pesel;
     }
 }

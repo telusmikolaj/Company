@@ -88,8 +88,6 @@ public class EmployeeRequestExceptionHandler {
         return new ResponseEntity<>(salaryDataException, salaryDataException.getHttpStatus());
     }
 
-
-
     public String getFieldErrorsString(MethodArgumentNotValidException e) {
         StringBuilder sb = new StringBuilder();
         List<FieldError> errors = e.getFieldErrors();

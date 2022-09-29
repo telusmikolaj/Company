@@ -103,7 +103,7 @@ public class EmoloyeeSalaryDataIT {
     @Test
     void create() {
 
-        EmployeeSalaryDataDto newSalaryDataDto = new EmployeeSalaryDataDto(PESEL_TEST, 12, 20220, BigDecimal.ONE);
+        EmployeeSalaryDataDto newSalaryDataDto = new EmployeeSalaryDataDto(PESEL_TEST, 5, 2022, BigDecimal.ONE);
 
         EmployeeSalaryDataDto savedSalaryDto = sendPostRequest(newSalaryDataDto);
 
@@ -136,7 +136,7 @@ public class EmoloyeeSalaryDataIT {
     @Test
     void getAllSalaryData() {
 
-        EmployeeSalaryDataDto newSalaryDataDto = new EmployeeSalaryDataDto(PESEL_TEST, 12, 20220, BigDecimal.ONE);
+        EmployeeSalaryDataDto newSalaryDataDto = new EmployeeSalaryDataDto(PESEL_TEST, 5, 2022, BigDecimal.ONE);
 
         sendPostRequest(newSalaryDataDto);
 
@@ -190,7 +190,7 @@ public class EmoloyeeSalaryDataIT {
     void update() {
 
 
-        EmployeeSalaryDataDto newSalaryDataDto = new EmployeeSalaryDataDto(PESEL_TEST, 12, 20220, BigDecimal.ONE);
+        EmployeeSalaryDataDto newSalaryDataDto = new EmployeeSalaryDataDto(PESEL_TEST, 5, 2022, BigDecimal.ONE);
         List<EmployeeSalaryDataDto> listForUpdate = new ArrayList<>();
         listForUpdate.add(this.salaryDataDto);
         listForUpdate.add(newSalaryDataDto);

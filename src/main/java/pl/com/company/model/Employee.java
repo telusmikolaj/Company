@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-public class Employee {
+public class Employee implements Entity {
 
     private String firstName;
     private String lastName;
@@ -48,9 +48,6 @@ public class Employee {
         return updatedAt;
     }
 
-    public String getPesel() {
-        return pesel;
-    }
     public void setPesel(String pesel) {
         this.pesel = pesel;
     }
@@ -68,6 +65,30 @@ public class Employee {
         return Objects.hash(firstName, lastName, pesel, salary);
     }
 
+    @Override
+    public String getPesel() {
+        return this.pesel;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public void setSalary(BigDecimal salary) {
+        this.salary = salary;
+    }
+
+    public void setCreateAt(LocalDateTime createAt) {
+        this.createAt = createAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
 
 }

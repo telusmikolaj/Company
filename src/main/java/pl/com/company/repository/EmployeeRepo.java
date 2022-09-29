@@ -1,30 +1,15 @@
 package pl.com.company.repository;
 
-import org.springframework.stereotype.Repository;
 import pl.com.company.model.Employee;
-import pl.com.company.model.EmployeeSalaryData;
+import pl.com.company.model.Entity;
+import pl.com.company.visitor.Visitable;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
-public interface EmployeeRepo {
-
-    Employee create(String firstName, String lastName, String pesel, BigDecimal salary);
-
-    Employee get(String pesel);
-
-
-    boolean delete(String pesel);
+public interface EmployeeRepo extends Visitable<Employee>, Repository<Employee> {
 
     Employee update(Employee employee);
-
-    int size();
-
-    boolean clear();
-    boolean checkIfEmployeeExists(String pesel);
-
-    void loadAll(List<Employee> employeeSalaryDataList);
-
-    List<Employee> getAll();
-
+    boolean isEmployeeExists(String pesel);
 }

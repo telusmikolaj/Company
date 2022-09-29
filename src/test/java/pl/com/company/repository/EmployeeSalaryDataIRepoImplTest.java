@@ -1,19 +1,16 @@
 package pl.com.company.repository;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import pl.com.company.exception.EmployeeSalaryDataRequestException;
+import pl.com.company.exception.EmployeeSalaryDataAlreadyExistsException;
+import pl.com.company.exception.EmployeeSalaryDataNotFoundException;
 import pl.com.company.model.EmployeeSalaryData;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 @SpringBootTest
 class EmployeeSalaryDataIRepoImplTest {
 
@@ -36,12 +33,6 @@ class EmployeeSalaryDataIRepoImplTest {
 
     public static final String NOT_EXSISTING_PESEL = "85120398120";
 
-    public static final int NOT_EXISTING_MONTH = 10;
-
-    public static final int  NOT_EXISTING_YEAR = 2050;
-
-
-
     @Autowired
     EmployeeSalaryDataRepo employeeSalaryDataRepo;
 
@@ -51,8 +42,8 @@ class EmployeeSalaryDataIRepoImplTest {
 
     @BeforeEach
     void setUp() {
-        this.salaryData  = employeeSalaryDataRepo.create(PESEL_TEST, MONTH_TEST, YEAR_TEST, SALARY_TEST);
-        this.nextSalaryData = employeeSalaryDataRepo.create(PESEL_TEST, MONTH_TEST_2, YEAR_TEST_2, SALARY_TEST_2);
+        this.salaryData  = employeeSalaryDataRepo.create(new EmployeeSalaryData(PESEL_TEST, MONTH_TEST, YEAR_TEST, SALARY_TEST));
+        this.nextSalaryData = employeeSalaryDataRepo.create(new EmployeeSalaryData(PESEL_TEST, MONTH_TEST_2, YEAR_TEST_2, SALARY_TEST_2));
 
     }
 
@@ -73,15 +64,6 @@ class EmployeeSalaryDataIRepoImplTest {
     }
 
     @Test
-    void createDuplicateShouldThrowEmployeeSalaryDataRequestException() {
-
-        Assertions.assertThrows(EmployeeSalaryDataRequestException.class, () -> {
-            employeeSalaryDataRepo.create(PESEL_TEST, MONTH_TEST, YEAR_TEST, SALARY_TEST);
-        });
-
-    }
-
-    @Test
     void update() {
         EmployeeSalaryData newSalaryData = new EmployeeSalaryData(PESEL_TEST, MONTH_TEST_3, YEAR_TEST_3, SALARY_TEST_3);
 
@@ -95,7 +77,7 @@ class EmployeeSalaryDataIRepoImplTest {
 
     @Test
     void updateNotExistingSalaryDataShouldThrowEmployeeSalaryDataRequestException() {
-        Assertions.assertThrows(EmployeeSalaryDataRequestException.class, () -> {
+        Assertions.assertThrows(EmployeeSalaryDataNotFoundException.class, () -> {
             employeeSalaryDataRepo.update(
                     new EmployeeSalaryData(NOT_EXSISTING_PESEL, MONTH_TEST, YEAR_TEST, SALARY_TEST),
                     new EmployeeSalaryData(NOT_EXSISTING_PESEL, MONTH_TEST_2, YEAR_TEST_2, SALARY_TEST_2));
@@ -104,7 +86,7 @@ class EmployeeSalaryDataIRepoImplTest {
 
     @Test
     void updateToExistingSalaryDataShouldThrowException() {
-        Assertions.assertThrows(EmployeeSalaryDataRequestException.class, () -> {
+        Assertions.assertThrows(EmployeeSalaryDataAlreadyExistsException.class, () -> {
             employeeSalaryDataRepo.update(salaryData, nextSalaryData);
         });
     }
@@ -122,16 +104,9 @@ class EmployeeSalaryDataIRepoImplTest {
     }
 
     @Test
-    void getNotExistingEmployeeSalaryDataShouldThrowException() {
-        Assertions.assertThrows(EmployeeSalaryDataRequestException.class, () -> {
-            employeeSalaryDataRepo.getEmployeeSalaryForGivenMonthAndYear(PESEL_TEST, NOT_EXISTING_YEAR, NOT_EXISTING_MONTH);
-        });
-    }
+    void get() {
 
-    @Test
-    void getAllEmployeeSalaryData() {
-
-        List<EmployeeSalaryData> allEmployeeSalaryData = employeeSalaryDataRepo.getAllEmployeeSalaryData(PESEL_TEST);
+        List<EmployeeSalaryData> allEmployeeSalaryData = employeeSalaryDataRepo.get(PESEL_TEST);
 
         EmployeeSalaryData fetchedSalaryData  = allEmployeeSalaryData.get(0);
         EmployeeSalaryData nextFetchedSalaryData = allEmployeeSalaryData.get(1);
@@ -146,21 +121,12 @@ class EmployeeSalaryDataIRepoImplTest {
         assertEquals(nextSalaryData.getMonth(),nextFetchedSalaryData.getMonth());
         assertEquals(nextSalaryData.getYear(), nextFetchedSalaryData.getYear());
         assertEquals(nextSalaryData.getPesel(), nextFetchedSalaryData.getPesel());
-
-
-    }
-
-    @Test
-    void getAllForNotExistingEmployeeShouldThrowEmployeeSalaryDataRequestException() {
-        Assertions.assertThrows(EmployeeSalaryDataRequestException.class, () -> {
-            employeeSalaryDataRepo.getAllEmployeeSalaryData(NOT_EXSISTING_PESEL);
-        });
     }
 
     @Test
     void deleteAllEmployeeSalaryData() {
 
-        boolean result = employeeSalaryDataRepo.deleteAllEmployeeSalaryData(PESEL_TEST);
+        boolean result = employeeSalaryDataRepo.delete(PESEL_TEST);
 
         assertTrue(result);
         assertEquals(0, this.employeeSalaryDataRepo.size());
@@ -176,10 +142,46 @@ class EmployeeSalaryDataIRepoImplTest {
     }
 
     @Test
-    void deleteNotExistingSalaryDataShouldThrowEmployeeSalaryDataRequestException() {
-        Assertions.assertThrows(EmployeeSalaryDataRequestException.class, () -> {
-            employeeSalaryDataRepo.deleteEmployeeSalaryDataForGivenMonthAndYear(
-                    PESEL_TEST, NOT_EXISTING_YEAR, NOT_EXISTING_MONTH);
-        });
+    void isEmployeeExsists() {
+        assertTrue(employeeSalaryDataRepo.isSalaryDataExsists(PESEL_TEST, YEAR_TEST, MONTH_TEST));
+        assertFalse(employeeSalaryDataRepo.isSalaryDataExsists("123", 1821, 15));
     }
+
+    @Test
+    void loadAll() {
+        List<EmployeeSalaryData> employeeSalaryData = employeeSalaryDataRepo.getAll();
+
+        assertEquals(employeeSalaryData.size(), 2);
+
+    }
+
+    @Test
+    void getAll() {
+        List<EmployeeSalaryData> employeeSalaryData = employeeSalaryDataRepo.getAll();
+        EmployeeSalaryData fetchedSalaryData  = employeeSalaryData.get(0);
+        EmployeeSalaryData nextFetchedSalaryData = employeeSalaryData.get(1);
+
+        assertEquals(2, employeeSalaryData.size());
+        assertEquals(salaryData.getMonthSalary(), fetchedSalaryData.getMonthSalary());
+        assertEquals(salaryData.getMonth(), fetchedSalaryData.getMonth());
+        assertEquals(salaryData.getYear(), fetchedSalaryData.getYear());
+        assertEquals(salaryData.getPesel(), fetchedSalaryData.getPesel());
+
+        assertEquals(nextSalaryData.getMonthSalary(), nextFetchedSalaryData.getMonthSalary());
+        assertEquals(nextSalaryData.getMonth(),nextFetchedSalaryData.getMonth());
+        assertEquals(nextSalaryData.getYear(), nextFetchedSalaryData.getYear());
+        assertEquals(nextSalaryData.getPesel(), nextFetchedSalaryData.getPesel());
+    }
+
+    @Test
+    void deleteAll() {
+        employeeSalaryDataRepo.deleteAll();
+        assertEquals(employeeSalaryDataRepo.size(), 0);
+    }
+    @Test
+    void size() {
+        assertEquals(employeeSalaryDataRepo.size(),2);
+    }
+
+
 }

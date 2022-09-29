@@ -5,15 +5,16 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.com.company.controller.EmployeeSalaryDataDto;
-import pl.com.company.exception.EmployeeNotFoundException;
-import pl.com.company.exception.EmployeeRequestException;
-import pl.com.company.exception.InvalidSalaryDataUpdateFormatException;
+import pl.com.company.exception.*;
+import pl.com.company.mapper.SalaryDataMapper;
 import pl.com.company.model.EmployeeSalaryData;
 import pl.com.company.repository.EmployeeRepo;
 import pl.com.company.repository.EmployeeSalaryDataRepo;
@@ -27,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class EmployeeSalaryDataServiceImplTest {
 
@@ -35,18 +35,23 @@ class EmployeeSalaryDataServiceImplTest {
     public static final int MONTH_TEST = 12;
     public static final int YEAR_TEST = 2022;
     public static final BigDecimal SALARY_TEST = BigDecimal.ONE;
-
     public static final int MONTH_TWO = 5;
 
-    public static final int YEAR_TWO = 2023;
+    public static final String NOT_EXSISTING_PESEL = "85120398120";
+
+    public static final int NOT_EXISTING_MONTH = 10;
+
+    public static final int  NOT_EXISTING_YEAR = 2050;
 
     public static final BigDecimal SALARY_TWO = BigDecimal.ONE;
 
     @Mock
     EmployeeSalaryDataRepo employeeSalaryDataRepo;
-
     @Mock
     EmployeeRepo employeeRepo;
+
+    @Spy
+    SalaryDataMapper mapper = Mappers.getMapper(SalaryDataMapper.class);
     @InjectMocks
     EmployeeSalaryDataServiceImpl employeeSalaryDataService;
 
@@ -75,10 +80,10 @@ class EmployeeSalaryDataServiceImplTest {
 
     @Test
     void create() {
-        when(employeeSalaryDataRepo.create(anyString(), anyInt(),anyInt(), any(BigDecimal.class)))
+        when(employeeSalaryDataRepo.create(any()))
                 .thenReturn(this.salaryDataFromRepo);
 
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(true);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(true);
 
         EmployeeSalaryDataDto salaryDataDto = employeeSalaryDataService.create(salaryDataDtoFromController);
 
@@ -90,8 +95,20 @@ class EmployeeSalaryDataServiceImplTest {
     }
 
     @Test
+    void createDuplicateShouldThrowEmployeeSalaryDataRequestException() {
+
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(true);
+        when(employeeSalaryDataRepo.isSalaryDataExsists(anyString(),anyInt(),anyInt())).thenReturn(true);
+
+        Assertions.assertThrows(EmployeeSalaryDataAlreadyExistsException.class, () -> {
+            employeeSalaryDataService.create(new EmployeeSalaryDataDto(PESEL_TEST, MONTH_TEST, YEAR_TEST, SALARY_TEST));
+        });
+
+    }
+
+    @Test
     void createWithNotExistingPeselShouldThrowEmployeeRequestException() {
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(false);
+        when(employeeRepo.isEmployeeExists((anyString()))).thenReturn(false);
 
         Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
             EmployeeSalaryDataDto salaryDataDto = employeeSalaryDataService.create(salaryDataDtoFromController);
@@ -103,7 +120,7 @@ class EmployeeSalaryDataServiceImplTest {
         when(employeeSalaryDataRepo.update(any(EmployeeSalaryData.class), any(EmployeeSalaryData.class)))
                 .thenReturn(this.salaryDataFromRepo);
 
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(true);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(true);
 
         EmployeeSalaryDataDto updatedSalaryData = employeeSalaryDataService
                 .update(this.salaryListToUpdate);
@@ -115,9 +132,10 @@ class EmployeeSalaryDataServiceImplTest {
         assertEquals(SALARY_TEST, updatedSalaryData.getMonthSalary());
     }
 
+
     @Test
     void updateWithNotExistingPeselShouldThrowEmployeeRequestException() {
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(false);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(false);
 
         Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
             EmployeeSalaryDataDto updatedSalaryData = employeeSalaryDataService
@@ -138,7 +156,9 @@ class EmployeeSalaryDataServiceImplTest {
     @Test
     void getEmployeeSalaryDataForGivenMonthAndYear() {
         when(employeeSalaryDataRepo.getEmployeeSalaryForGivenMonthAndYear(anyString(), anyInt(), anyInt())).thenReturn(salaryDataFromRepo);
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(true);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(true);
+        when(employeeSalaryDataRepo.isSalaryDataExsists(anyString(),anyInt(),anyInt())).thenReturn(true);
+
 
         EmployeeSalaryDataDto salaryDataDto = employeeSalaryDataService
                 .getEmployeeSalaryDataForGivenMonthAndYear(PESEL_TEST, YEAR_TEST, MONTH_TEST);
@@ -153,7 +173,7 @@ class EmployeeSalaryDataServiceImplTest {
 
     @Test
     void getSalaryForNotExistingEmployeeShouldThrowEmployeeRequestException() {
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(false);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(false);
 
         Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
             EmployeeSalaryDataDto salaryDataDto = employeeSalaryDataService
@@ -163,8 +183,8 @@ class EmployeeSalaryDataServiceImplTest {
 
     @Test
     void getAllEmployeeSalaryDataForGivenEmployee() {
-        when(employeeSalaryDataRepo.getAllEmployeeSalaryData(anyString())).thenReturn(employeeSalaryDataList);
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(true);
+        when(employeeSalaryDataRepo.get(anyString())).thenReturn(employeeSalaryDataList);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(true);
 
         List <EmployeeSalaryDataDto> fetchedList = employeeSalaryDataService.getAllEmployeeSalaryDataForGivenEmployee(PESEL_TEST);
         EmployeeSalaryDataDto salaryDataDto = fetchedList.get(0);
@@ -178,8 +198,25 @@ class EmployeeSalaryDataServiceImplTest {
     }
 
     @Test
+    void getAllForNotExistingEmployeeShouldThrowEmployeeNotFoundException() {
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(false);
+
+        Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
+            employeeSalaryDataService.getAllEmployeeSalaryDataForGivenEmployee(NOT_EXSISTING_PESEL);
+        });
+    }
+    @Test
+    void getNotExistingEmployeeSalaryDataShouldThrowException() {
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(true);
+        when(employeeSalaryDataRepo.isSalaryDataExsists(anyString(),anyInt(),anyInt())).thenReturn(false);
+
+        Assertions.assertThrows(EmployeeSalaryDataNotFoundException.class, () -> {
+            employeeSalaryDataService.getEmployeeSalaryDataForGivenMonthAndYear(PESEL_TEST, NOT_EXISTING_YEAR, NOT_EXISTING_MONTH);
+        });
+    }
+    @Test
     void getAllSalaryDataForNotExisitingEmployeeShouldThrowEmployeeRequestException() {
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(false);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(false);
 
         Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
             List <EmployeeSalaryDataDto> fetchedList = employeeSalaryDataService.getAllEmployeeSalaryDataForGivenEmployee(PESEL_TEST);
@@ -189,7 +226,8 @@ class EmployeeSalaryDataServiceImplTest {
     @Test
     void deleteEmployeeSalaryDataForGivenMonthAndYear() {
         when(employeeSalaryDataRepo.deleteEmployeeSalaryDataForGivenMonthAndYear(anyString(), anyInt(), anyInt())).thenReturn(true);
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(true);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(true);
+        when(employeeSalaryDataRepo.isSalaryDataExsists(anyString(),anyInt(),anyInt())).thenReturn(true);
 
         boolean result = employeeSalaryDataService.deleteEmployeeSalaryDataForGivenMonthAndYear(PESEL_TEST, YEAR_TEST, MONTH_TEST);
 
@@ -198,7 +236,7 @@ class EmployeeSalaryDataServiceImplTest {
 
     @Test
     void deleteSalaryDataForNotExistingEmployeeShouldThrowEmployeeRequestException() {
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(false);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(false);
 
         Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
             boolean result = employeeSalaryDataService.deleteEmployeeSalaryDataForGivenMonthAndYear(PESEL_TEST, YEAR_TEST, MONTH_TEST);
@@ -207,8 +245,8 @@ class EmployeeSalaryDataServiceImplTest {
 
     @Test
     void deleteAllEmployeeSalaryData() {
-        when(employeeSalaryDataRepo.deleteAllEmployeeSalaryData(anyString())).thenReturn(true);
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(true);
+        when(employeeSalaryDataRepo.delete((anyString()))).thenReturn(true);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(true);
 
         boolean result = employeeSalaryDataService.deleteAllEmployeeSalaryData(PESEL_TEST);
 
@@ -217,10 +255,21 @@ class EmployeeSalaryDataServiceImplTest {
 
     @Test
     void deleteAllForNotExisitingEmployeeShouldEmployeeRequestException() {
-        when(employeeRepo.checkIfEmployeeExists(anyString())).thenReturn(false);
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(false);
 
         Assertions.assertThrows(EmployeeNotFoundException.class, () -> {
             boolean result = employeeSalaryDataService.deleteAllEmployeeSalaryData(PESEL_TEST);
+        });
+    }
+
+    @Test
+    void deleteNotExistingSalaryDataShouldThrowEmployeeSalaryDataRequestException() {
+        when(employeeRepo.isEmployeeExists(anyString())).thenReturn(true);
+        when(employeeSalaryDataRepo.isSalaryDataExsists(anyString(),anyInt(),anyInt())).thenReturn(false);
+
+        Assertions.assertThrows(EmployeeSalaryDataNotFoundException.class, () -> {
+            employeeSalaryDataService.deleteEmployeeSalaryDataForGivenMonthAndYear(
+                    PESEL_TEST, NOT_EXISTING_YEAR, NOT_EXISTING_MONTH);
         });
     }
 }

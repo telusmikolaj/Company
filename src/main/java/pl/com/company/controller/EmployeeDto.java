@@ -62,4 +62,6 @@ public class EmployeeDto {
     public void setSalary(BigDecimal salary) {
         this.salary = salary;
     }
+
+
 }
