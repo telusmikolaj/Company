@@ -17,16 +17,20 @@ pipelines:
           name: 'Security scan'
           script:
             - echo "Your security scan goes here..."
+    - step:
+        name: Create artifact
+        script:
+          - tar czfv application.tgz pom.xml src/
+        artifacts:
+          - application.tgz
 
-    # The following deployment steps will be executed for each pipeline run. To configure your steps and conditionally deploy see https://support.atlassian.com/bitbucket-cloud/docs/configure-bitbucket-pipelinesyml/
     - step:
-        name: 'Deployment to Staging'
-        deployment: staging
-        script:
-          - echo "Your deployment to staging script goes here..."
-    - step:
-        name: 'Deployment to Production'
+        name: Deploy to production
         deployment: production
-        trigger: 'manual'
         script:
-          - echo "Your deployment to production script goes here..."
+          - pipe: atlassian/heroku-deploy:1.1.0
+            variables:
+              HEROKU_API_KEY: $HEROKU_API_KEY
+              HEROKU_APP_NAME: $HEROKU_APP_NAME
+              ZIP_FILE: "application.tgz"
+
