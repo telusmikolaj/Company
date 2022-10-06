@@ -1,9 +1,10 @@
 package pl.com.company.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-import pl.com.company.exception.EmployeeNotFoundException;
 import pl.com.company.model.Employee;
-
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,4 +30,12 @@ public class EmployeeRepositoryDefault extends AbstractRepository<Employee> impl
         return employeeList.stream().anyMatch(employee -> employee.getPesel().equals(pesel));
     }
 
+    @Override
+    public Page<Employee> getAllEmployees(Pageable pageable) {
+        this.employeeList = this.getAll();
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), this.size());
+
+        return new PageImpl<>(this.employeeList.subList(start, end), pageable, this.size());
+    }
 }

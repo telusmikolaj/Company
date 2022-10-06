@@ -1,6 +1,8 @@
 package pl.com.company.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import pl.com.company.controller.EmployeeDto;
 import pl.com.company.exception.EmployeeAlreadyExistsException;
@@ -52,5 +54,9 @@ public class EmployeeServiceImpl implements EmployeeService{
         }
         this.employeeSalaryDataRepo.delete(pesel);
         return this.employeeRepo.delete(pesel);
+    }
+
+    public Page<EmployeeDto> getAllEmployees(Pageable pageable) {
+        return this.employeeRepo.getAllEmployees(pageable).map(mapper::employeeToDto);
     }
 }

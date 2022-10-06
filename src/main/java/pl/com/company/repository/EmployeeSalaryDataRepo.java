@@ -21,6 +21,5 @@ public interface EmployeeSalaryDataRepo extends Visitable<EmployeeSalaryData>, R
     boolean isSalaryDataExsists(String pesel, int year, int month);
 
 
-
 }
 

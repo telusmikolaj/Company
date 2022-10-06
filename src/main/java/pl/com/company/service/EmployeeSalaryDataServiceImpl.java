@@ -1,14 +1,18 @@
 package pl.com.company.service;
 
+import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
 import pl.com.company.controller.EmployeeSalaryDataDto;
 import pl.com.company.exception.*;
+import pl.com.company.jobs.CountAnnualSalaryJob;
+import pl.com.company.jobs.CountMonthlySalaryJob;
 import pl.com.company.mapper.SalaryDataMapper;
 import pl.com.company.model.EmployeeSalaryData;
 import pl.com.company.repository.EmployeeRepo;
 import pl.com.company.repository.EmployeeSalaryDataRepo;
 
 
+import java.text.ParseException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,10 +25,14 @@ public class EmployeeSalaryDataServiceImpl implements EmployeeSalaryDataService 
 
     private final SalaryDataMapper mapper;
 
-    public EmployeeSalaryDataServiceImpl(EmployeeSalaryDataRepo employeeSalaryDataRepo, EmployeeRepo employeeRepo, SalaryDataMapper mapper) {
+    private final SalaryJobService salaryJobService;
+
+
+    public EmployeeSalaryDataServiceImpl(EmployeeSalaryDataRepo employeeSalaryDataRepo, EmployeeRepo employeeRepo, SalaryDataMapper mapper, CountMonthlySalaryJob monthlyJobService, SalaryJobService salaryJobService) {
         this.employeeSalaryDataRepo = employeeSalaryDataRepo;
         this.employeeRepo = employeeRepo;
         this.mapper = mapper;
+        this.salaryJobService = salaryJobService;
     }
 
     @Override
@@ -104,4 +112,15 @@ public class EmployeeSalaryDataServiceImpl implements EmployeeSalaryDataService 
         }
         throw new EmployeeNotFoundException(pesel);
     }
+
+    public void runCountMontlySalaryJob() throws SchedulerException, ParseException {
+        salaryJobService.schedule(CountMonthlySalaryJob.class);
+    }
+
+    @Override
+    public void runCountAnnualSalaryJob() throws SchedulerException, ParseException {
+        salaryJobService.schedule(CountAnnualSalaryJob.class);
+    }
+
+
 }

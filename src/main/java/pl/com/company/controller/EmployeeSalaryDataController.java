@@ -1,10 +1,12 @@
 package pl.com.company.controller;
 
+import org.quartz.SchedulerException;
 import org.springframework.web.bind.annotation.*;
 import pl.com.company.service.EmployeeSalaryDataService;
 
 import javax.validation.Valid;
 
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -53,4 +55,14 @@ public class EmployeeSalaryDataController {
 
         return this.employeeSalaryDataService.update(salaryDataDtoList);
     }
+
+    @PostMapping("/runmonthlyjob")
+    public void runCountMontlySalaryJob() throws SchedulerException, ParseException {
+        this.employeeSalaryDataService.runCountMontlySalaryJob();
+    }
+    @PostMapping("/runannualjob")
+    public void runCountAnnualSalaryJob() throws SchedulerException, ParseException {
+        this.employeeSalaryDataService.runCountAnnualSalaryJob();
+    }
+
 }

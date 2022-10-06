@@ -1,6 +1,9 @@
 package pl.com.company.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 import pl.com.company.service.EmployeeServiceImpl;
 
@@ -36,5 +39,11 @@ public class EmployeeController {
     @DeleteMapping("/{pesel}")
     public boolean delete(@PathVariable String pesel) {
         return this.employeeService.delete(pesel);
+    }
+
+    @GetMapping(path = "/page")
+    public Page<EmployeeDto> getAllEmployees(@RequestParam int page, @RequestParam int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return this.employeeService.getAllEmployees(pageRequest);
     }
 }
